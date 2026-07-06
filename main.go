@@ -24,13 +24,15 @@ func main() {
 		fmt.Println("Gagal migrasi:", err)
 	}
 
-	// 3. Merangkai Komponen (Dependency Injection)
-	// a. Buat Petugas Gudang dengan memberikan alat kerjanya (Database)
+	//===KOMPONEN USER
 	userRepo := repository.NewUserRepository(config.DB)
-	// b. Buat Koki Dapur dengan memberikan asistennya (Petugas Gudang)
 	userService := service.NewUserService(userRepo)
-	// c. Buat Pelayan dengan memberikan koki andalannya (Service)
 	userController := controller.NewUserController(userService)
+
+	//===KOMPONEN ITEM
+	itemRepo := repository.NewItemRepository(config.DB)
+	itemService := service.NewItemService(itemRepo)
+	itemController := controller.NewItemController(itemService)
 
 	// 4. Inisialisasi Router
 	r := gin.Default()
@@ -42,6 +44,7 @@ func main() {
 
 	// Ini adalah rute baru kita. Jika ada request POST ke /users, serahkan ke Pelayan (Controller)
 	r.POST("/users", userController.Create)
+	r.POST("/item", itemController.Create)
 
 	// 6. Jalankan Server
 	r.Run(":8080")
