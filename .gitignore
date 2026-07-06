@@ -1,0 +1,10 @@
+# Mengabaikan file environment
+.env
+
+# Mengabaikan file hasil build
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
