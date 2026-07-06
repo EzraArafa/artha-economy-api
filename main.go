@@ -27,10 +27,8 @@ func main() {
 	// 3. Merangkai Komponen (Dependency Injection)
 	// a. Buat Petugas Gudang dengan memberikan alat kerjanya (Database)
 	userRepo := repository.NewUserRepository(config.DB)
-
 	// b. Buat Koki Dapur dengan memberikan asistennya (Petugas Gudang)
 	userService := service.NewUserService(userRepo)
-
 	// c. Buat Pelayan dengan memberikan koki andalannya (Service)
 	userController := controller.NewUserController(userService)
 
