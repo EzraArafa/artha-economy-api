@@ -44,3 +44,38 @@ func (s *UserService) CreateUser(user *model.User) error {
 
 	return nil //mengembalikan nil, berarti proses sukses tanpa error
 }
+
+// Fungsi otak dari transaksi
+func (s *UserService) TransferBalance(senderID int, receiverID int, amount int) error {
+	//Validasi dasar, Uang yang dikirim tidak boleh minus atau 0
+	if amount <= 0 {
+		return errors.New("jumlah transfer kamu harus lebih dari 0")
+	}
+
+	//Mencegah transfer ke diri sendiri
+	if senderID == receiverID {
+		return errors.New("tidak bisa mentransfer ke diri sendiri")
+	}
+
+	//Mencari data pengirim
+	sender, err := s.userRepo.FindByID(senderID)
+	if err != nil {
+		return errors.New("data pengirim tidak ditemukan")
+	}
+
+	//Mencari daata penerima
+	receiver, err := s.userRepo.FindByID(receiverID)
+	if err != nil {
+		return errors.New("data penerima tidak ditemukan")
+	}
+
+	//Mengecek apakah saldo pengirim cukup
+	if sender.Balance < amount {
+		return errors.New("saldo tidak cukup untuk melakukan transfer")
+	}
+
+	sender.Balance -= amount
+	receiver.Balance += amount
+
+	return s.userRepo.ExecuteTransfer(sender, receiver)
+}

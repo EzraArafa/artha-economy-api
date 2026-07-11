@@ -37,3 +37,33 @@ func (ctrl *UserController) Create(c *gin.Context) {
 		"data":    user,
 	})
 }
+
+type TransferInput struct {
+	SenderID   int `json:"sender_id"`
+	ReceiverID int `json:"receiver_id"`
+	Amount     int `json:"amount"`
+}
+
+// Fungsi untuk menerima pesanan transfer
+func (ctrl *UserController) Transfer(c *gin.Context) {
+	var input TransferInput
+
+	//Menangkap format JSON yang dikirim User
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak sesuai"})
+		return
+	}
+
+	//Meneruskan ke Service untuk dieksekusi logikanya
+	err := ctrl.userService.TransferBalance(input.SenderID, input.ReceiverID, input.Amount)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//Jika sukses tanpa error, berikan pesan berhasil
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Transfer berhasil dilakukan!",
+	})
+
+}
