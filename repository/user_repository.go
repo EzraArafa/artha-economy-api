@@ -41,3 +41,8 @@ func (r *UserRepository) ExecuteTransfer(sender *model.User, receiver *model.Use
 
 	return tx.Commit().Error
 }
+
+// Fungsi untuk menyimpan pembaruan data user tunggal
+func (r *UserRepository) Update(user *model.User) error {
+	return r.db.Save(user).Error
+}

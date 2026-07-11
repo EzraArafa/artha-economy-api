@@ -79,3 +79,18 @@ func (s *UserService) TransferBalance(senderID int, receiverID int, amount int) 
 
 	return s.userRepo.ExecuteTransfer(sender, receiver)
 }
+
+func (s *UserService) DeductBalance(userID int, amount int) error {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return errors.New("data user tidak ditemukan")
+	}
+
+	if user.Balance < amount {
+		return errors.New("saldo tidak mencukupi untuk membeli barang ini")
+	}
+
+	user.Balance -= amount
+
+	return s.userRepo.Update(user)
+}

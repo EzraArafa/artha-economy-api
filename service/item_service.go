@@ -27,3 +27,7 @@ func (s *ItemService) CreateItem(item *model.Item) error {
 
 	return s.itemRepo.Create(item)
 }
+
+func (s *ItemService) GetItemByID(id int) (*model.Item, error) {
+	return s.itemRepo.FindByID(id)
+}

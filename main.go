@@ -24,15 +24,15 @@ func main() {
 		fmt.Println("Gagal migrasi:", err)
 	}
 
-	//===KOMPONEN USER
-	userRepo := repository.NewUserRepository(config.DB)
-	userService := service.NewUserService(userRepo)
-	userController := controller.NewUserController(userService)
-
 	//===KOMPONEN ITEM
 	itemRepo := repository.NewItemRepository(config.DB)
 	itemService := service.NewItemService(itemRepo)
 	itemController := controller.NewItemController(itemService)
+
+	//===KOMPONEN USER
+	userRepo := repository.NewUserRepository(config.DB)
+	userService := service.NewUserService(userRepo)
+	userController := controller.NewUserController(userService, itemService)
 
 	// 4. Inisialisasi Router
 	r := gin.Default()
@@ -45,8 +45,7 @@ func main() {
 	// Ini adalah rute baru kita. Jika ada request POST ke /users, serahkan ke Pelayan (Controller)
 	r.POST("/users", userController.Create)
 	r.POST("/item", itemController.Create)
-
-	r.POST("/transfer", userController.Transfer)
+	r.POST("/buy", userController.BuyItem)
 	// 6. Jalankan Server
 	r.Run(":8080")
 }

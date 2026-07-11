@@ -17,3 +17,9 @@ func (r *ItemRepository) Create(item *model.Item) error {
 	err := r.db.Create(item).Error
 	return err
 }
+
+func (r *ItemRepository) FindByID(id int) (*model.Item, error) {
+	var item model.Item
+	err := r.db.First(&item, id).Error
+	return &item, err
+}

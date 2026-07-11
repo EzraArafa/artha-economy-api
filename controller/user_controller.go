@@ -10,10 +10,11 @@ import (
 
 type UserController struct {
 	userService *service.UserService
+	itemService *service.ItemService
 }
 
-func NewUserController(userService *service.UserService) *UserController {
-	return &UserController{userService: userService}
+func NewUserController(userService *service.UserService, itemService *service.ItemService) *UserController {
+	return &UserController{userService: userService, itemService: itemService}
 }
 
 func (ctrl *UserController) Create(c *gin.Context) {
@@ -66,4 +67,40 @@ func (ctrl *UserController) Transfer(c *gin.Context) {
 		"message": "Transfer berhasil dilakukan!",
 	})
 
+}
+
+// Struktur untuk menangkap data pembelian
+type BuyInput struct {
+	UserID int `json:"user_id"`
+	ItemID int `json:"item_id"`
+}
+
+func (ctrl *UserController) BuyItem(c *gin.Context) {
+	var input BuyInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak sesuai"})
+		return
+	}
+
+	//Cek harga barang ke ItemService
+	item, err := ctrl.itemService.GetItemByID(input.ItemID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Barang tidak ditemukan"})
+		return
+	}
+
+	//Menyuruh UserService memotong saldo sesuai harga barang
+	err = ctrl.userService.DeductBalance(input.UserID, item.Price)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	//memberi respon sukses
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Pembelian sukses!",
+		"item":    item.Name,
+		"price":   item.Price,
+	})
 }
