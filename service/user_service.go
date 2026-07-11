@@ -96,3 +96,8 @@ func (s *UserService) PurchaseItem(userID int, item *model.Item, quantity int) e
 
 	return s.userRepo.ExecutePurchase(user, int(item.ID), item.Price, quantity)
 }
+
+// Fungsi untuk melihan inventory
+func (s *UserService) GetUserInventory(userID int) ([]model.UserInventory, error) {
+	return s.userRepo.GetInventoryByUserID(userID)
+}

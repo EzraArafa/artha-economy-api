@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/EzraArafa/artha-economy-api/model"
 	"github.com/EzraArafa/artha-economy-api/service"
@@ -110,5 +111,32 @@ func (ctrl *UserController) BuyItem(c *gin.Context) {
 		"price":    item.Price,
 		"quantity": input.Quantity,
 		"total":    item.Price * input.Quantity,
+	})
+}
+
+// Fungsi untuk menampilkan inventory user
+// Fungsi untuk menampilkan isi tas user
+func (ctrl *UserController) GetInventory(c *gin.Context) {
+	// 1. Ambil ID dari URL (misal: /users/2/inventory)
+	userIDStr := c.Param("user_id")
+
+	// 2. Ubah format ID dari teks ke angka
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format ID user tidak valid"})
+		return
+	}
+
+	// 3. Minta data ke Service
+	inventories, err := ctrl.userService.GetUserInventory(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 4. Tampilkan data ke layar!
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Berhasil memuat isi tas",
+		"data":    inventories,
 	})
 }

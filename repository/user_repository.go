@@ -85,3 +85,11 @@ func (r *UserRepository) ExecutePurchase(user *model.User, itemID int, price int
 	//Jika semua berhasil
 	return tx.Commit().Error
 }
+
+// Fungsi untuk mengambil seluruh inventory milik user
+func (r *UserRepository) GetInventoryByUserID(userID int) ([]model.UserInventory, error) {
+	var inventories []model.UserInventory
+	//Preload ("item") akan otomatis memuat semua detail barang
+	err := r.db.Preload("Item").Where("user_id = ?", userID).Find(&inventories).Error
+	return inventories, err
+}

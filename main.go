@@ -47,6 +47,8 @@ func main() {
 	r.POST("/item", itemController.Create)
 	r.POST("/buy", userController.BuyItem)
 	r.POST("/transfer", userController.Transfer)
+
+	r.GET("/users/:user_id/inventory", userController.GetInventory)
 	// 6. Jalankan Server
 	r.Run(":8080")
 }
