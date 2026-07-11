@@ -71,8 +71,9 @@ func (ctrl *UserController) Transfer(c *gin.Context) {
 
 // Struktur untuk menangkap data pembelian
 type BuyInput struct {
-	UserID int `json:"user_id"`
-	ItemID int `json:"item_id"`
+	UserID   int `json:"user_id"`
+	ItemID   int `json:"item_id"`
+	Quantity int `json:"quantity"`
 }
 
 func (ctrl *UserController) BuyItem(c *gin.Context) {
@@ -83,6 +84,11 @@ func (ctrl *UserController) BuyItem(c *gin.Context) {
 		return
 	}
 
+	//Mencegah pembelian 0 atau minus
+	if input.Quantity <= 0 {
+		input.Quantity = 1
+	}
+
 	//Cek harga barang ke ItemService
 	item, err := ctrl.itemService.GetItemByID(input.ItemID)
 	if err != nil {
@@ -90,8 +96,8 @@ func (ctrl *UserController) BuyItem(c *gin.Context) {
 		return
 	}
 
-	//Menyuruh UserService memotong saldo sesuai harga barang
-	err = ctrl.userService.DeductBalance(input.UserID, item.Price)
+	//Menyuruh Service mengeksekusi pembelian (potong saldo & masuk ke inventory)
+	err = ctrl.userService.PurchaseItem(input.UserID, item, input.Quantity)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -99,8 +105,10 @@ func (ctrl *UserController) BuyItem(c *gin.Context) {
 
 	//memberi respon sukses
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Pembelian sukses!",
-		"item":    item.Name,
-		"price":   item.Price,
+		"message":  "Pembelian sukses!",
+		"item":     item.Name,
+		"price":    item.Price,
+		"quantity": input.Quantity,
+		"total":    item.Price * input.Quantity,
 	})
 }

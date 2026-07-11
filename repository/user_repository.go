@@ -46,3 +46,42 @@ func (r *UserRepository) ExecuteTransfer(sender *model.User, receiver *model.Use
 func (r *UserRepository) Update(user *model.User) error {
 	return r.db.Save(user).Error
 }
+
+// Fungsi untuk memotong saldo dan menambah barang ke inventory
+func (r *UserRepository) ExecutePurchase(user *model.User, itemID int, price int, quantity int) error {
+	tx := r.db.Begin()
+
+	//Memotong saldo user dan simpan
+	user.Balance -= (price * quantity)
+	if err := tx.Save(user).Error; err != nil {
+		tx.Rollback() //batal jika gagal
+		return err
+	}
+
+	//Cek apakah barang sudah masuk ke inventory user
+	var inventory model.UserInventory
+	err := tx.Where("user_id = ? AND item_id = ?", user.ID, itemID).First(&inventory).Error
+
+	if err != nil {
+		//Jika barang belum ada, maka membuat tumpukan baru
+		inventory = model.UserInventory{
+			UserID:   int(user.ID),
+			ItemID:   itemID,
+			Quantity: quantity,
+		}
+		if err := tx.Create(&inventory).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	} else {
+		//Jika barang sudah ada
+		inventory.Quantity += quantity
+		if err := tx.Save(&inventory).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	//Jika semua berhasil
+	return tx.Commit().Error
+}

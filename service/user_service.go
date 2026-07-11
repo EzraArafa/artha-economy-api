@@ -80,17 +80,19 @@ func (s *UserService) TransferBalance(senderID int, receiverID int, amount int) 
 	return s.userRepo.ExecuteTransfer(sender, receiver)
 }
 
-func (s *UserService) DeductBalance(userID int, amount int) error {
+// Fungsi untuk mengecek syarat sebelum mengeksekusi pembelian
+func (s *UserService) PurchaseItem(userID int, item *model.Item, quantity int) error {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return errors.New("data user tidak ditemukan")
 	}
 
-	if user.Balance < amount {
-		return errors.New("saldo tidak mencukupi untuk membeli barang ini")
+	totalPrice := item.Price * quantity
+
+	//Validasi saldo
+	if user.Balance < totalPrice {
+		return errors.New("saldo tidak cukup untuk membeli barang ini")
 	}
 
-	user.Balance -= amount
-
-	return s.userRepo.Update(user)
+	return s.userRepo.ExecutePurchase(user, int(item.ID), item.Price, quantity)
 }

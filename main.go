@@ -19,7 +19,7 @@ func main() {
 	config.ConnectDatabase()
 
 	// 2. AutoMigrate Tabel
-	err := config.DB.AutoMigrate(&model.User{}, &model.Item{})
+	err := config.DB.AutoMigrate(&model.User{}, &model.Item{}, &model.UserInventory{})
 	if err != nil {
 		fmt.Println("Gagal migrasi:", err)
 	}
@@ -46,6 +46,7 @@ func main() {
 	r.POST("/users", userController.Create)
 	r.POST("/item", itemController.Create)
 	r.POST("/buy", userController.BuyItem)
+	r.POST("/transfer", userController.Transfer)
 	// 6. Jalankan Server
 	r.Run(":8080")
 }
