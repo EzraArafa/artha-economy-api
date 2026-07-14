@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/EzraArafa/artha-economy-api/model"
 	"gorm.io/gorm"
 )
@@ -92,4 +94,86 @@ func (r *UserRepository) GetInventoryByUserID(userID int) ([]model.UserInventory
 	//Preload ("item") akan otomatis memuat semua detail barang
 	err := r.db.Preload("Item").Where("user_id = ?", userID).Find(&inventories).Error
 	return inventories, err
+}
+
+// Fungsi untuk memakai barang
+func (r *UserRepository) ConsumeItem(userID int, itemID int, quantity int) error {
+	var inventory model.UserInventory
+
+	//Cari barang didalam tas user
+	err := r.db.Where("user_id = ? AND item_id = ?", userID, itemID).First(&inventory).Error
+	if err != nil {
+		return errors.New("barang tidak ditemukan didalam inventory")
+	}
+
+	//Cek apakah jumlah barang yang mau dipakai tidak melebihi yang dimiliki
+	if inventory.Quantity < quantity {
+		return errors.New("jumlah barang tidak mencukupi untuk digunakan")
+	}
+
+	//Kurangi jumlah
+	inventory.Quantity -= quantity
+
+	//Jika habis (0), hapus dari tas. Jika masih ada, simpan pembaruannya
+	if inventory.Quantity == 0 {
+		return r.db.Delete(&inventory).Error
+	}
+
+	return r.db.Save(&inventory).Error
+}
+
+// Fungsi untuk memindahkan barang antara user dengan aman
+func (r *UserRepository) TransferItem(senderID int, receiverID int, itemID int, quantity int) error {
+	tx := r.db.Begin()
+
+	//Mengurangi barang dari tas pengirim
+	var senderInv model.UserInventory
+	if err := tx.Where("user_id = ? AND item_id = ?", senderID, itemID).First(&senderInv).Error; err != nil {
+		tx.Rollback()
+		return errors.New("pengirim tidak memiliki barang tersebut ditasnya")
+	}
+
+	if senderInv.Quantity < quantity {
+		tx.Rollback()
+		return errors.New("jumlah barang pengirim tidak mencukupi untuk diberikan")
+	}
+
+	senderInv.Quantity -= quantity
+	if senderInv.Quantity == 0 {
+		if err := tx.Delete(&senderInv).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	} else {
+		if err := tx.Save(&senderInv).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	//Menambah barang ke tas penerima
+	var receiverInv model.UserInventory
+	err := tx.Where("user_id = ? AND item_id = ?", receiverID, itemID).First(&receiverInv).Error
+
+	if err != nil {
+		//Jika belum punya barang, maka membuat tumpukan baru
+		receiverInv = model.UserInventory{
+			UserID:   receiverID,
+			ItemID:   itemID,
+			Quantity: quantity,
+		}
+		if err := tx.Create(&receiverInv).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	} else {
+		//Jika sudah punya, tambahkan ke tumpukan yang ada
+		receiverInv.Quantity += quantity
+		if err = tx.Save(&receiverInv).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit().Error
 }

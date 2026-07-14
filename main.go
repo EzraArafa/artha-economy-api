@@ -49,6 +49,9 @@ func main() {
 	r.POST("/transfer", userController.Transfer)
 
 	r.GET("/users/:user_id/inventory", userController.GetInventory)
+
+	r.POST("/use-item", userController.ConsumeItem)
+	r.POST("/give-item", userController.TransferItem)
 	// 6. Jalankan Server
 	r.Run(":8080")
 }

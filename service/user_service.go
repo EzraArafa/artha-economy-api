@@ -101,3 +101,24 @@ func (s *UserService) PurchaseItem(userID int, item *model.Item, quantity int) e
 func (s *UserService) GetUserInventory(userID int) ([]model.UserInventory, error) {
 	return s.userRepo.GetInventoryByUserID(userID)
 }
+
+// Fungsi untuk memvalidasi penggunaan barang
+func (s *UserService) ConsumeItem(userID int, itemID int, quantity int) error {
+	//Mencegah input quantity minus atau nol
+	if quantity <= 0 {
+		return errors.New("jumlah barang yang digunakan harus lebih dari 0")
+	}
+	return s.userRepo.ConsumeItem(userID, itemID, quantity)
+}
+
+// Fungsi validasi sebelum transfer barang dieksekusi
+func (s *UserService) TransferItem(senderID int, receiverID int, itemID int, quantity int) error {
+	if senderID == receiverID {
+		return errors.New("tidak bisa memberikan barang ke diri sendiri")
+	}
+	if quantity <= 0 {
+		return errors.New("jumlah barang yan diberikan harus lebih dari 0")
+	}
+
+	return s.userRepo.TransferItem(senderID, receiverID, itemID, quantity)
+}

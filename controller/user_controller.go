@@ -140,3 +140,64 @@ func (ctrl *UserController) GetInventory(c *gin.Context) {
 		"data":    inventories,
 	})
 }
+
+// Struct penampung data request pemakaian barang
+type ConsumeInput struct {
+	UserID   int `json:"user_id"`
+	ItemID   int `json:"item_id"`
+	Quantity int `json:"quantity"`
+}
+
+// Fungsi memakai barang
+func (ctrl *UserController) ConsumeItem(c *gin.Context) {
+	var input ConsumeInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak sesuai"})
+		return
+	}
+
+	// Suruh service mengeksekusi penggunaan barang
+	err := ctrl.userService.ConsumeItem(input.UserID, input.ItemID, input.Quantity)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Barang berhasil digunakan",
+		"item_id":  input.ItemID,
+		"quantity": input.Quantity,
+	})
+}
+
+// Kirim barang
+type TrasnferItemInput struct {
+	SenderID   int `json:"sender_id"`
+	ReceiverID int `json:"receiver_id"`
+	ItemID     int `json:"item_id"`
+	Quantity   int `json:"quantity"`
+}
+
+// Fungsi untuk trasnfer barang antar user
+func (ctrl *UserController) TransferItem(c *gin.Context) {
+	var input TrasnferItemInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak sesuai"})
+		return
+	}
+
+	// Eksekusi trasnfer melalui Service
+	err := ctrl.userService.TransferItem(input.SenderID, input.ReceiverID, input.ItemID, input.Quantity)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Barang berhasil diserahkan!",
+		"item_id":  input.ItemID,
+		"quantity": input.Quantity,
+	})
+}
